@@ -166,13 +166,36 @@ btnAdd.addEventListener('click', () => {
 // 1. Create a function toggleDone(title)
 //    - Find a task by title
 //    - Flip its done value (true/false)
-
+function toggleDone(title) {
+    const found = tasks.find(x => x.title === title);
+    if(found) {
+        found.done = !found.done;
+    }    
+}
 // 2. Update renderTaskList() to show '(done)' or '(todo)'
+renderTaskList = function (items) {
+    let html = '<ul>';
+    for (const item of items) {
+        const status = item.done ? 'done' : 'todo';
+        // the data-title attribute is not requested, but it's a good approach, given that we are adding extra .textContent to the <li>
+        html += `<li class="${status}" data-title="${item.title}">(${status}) ${item.title}</li>`;
+    }
+    html += '</ul>';
+    return html;
+}
+list.innerHTML = renderTaskList(tasks); // to re-generate with the new (done|todo).
 
 // 3. Add event delegation to the <ul>
 //    - When a list item is clicked:
 //      * Toggle the task
 //      * Re-render the list
+list.addEventListener('click', evt => {
+    if(evt.target.tagName === 'LI') {
+        let title = evt.target.dataset.title;
+        toggleDone(title);
+        list.innerHTML = renderTaskList(tasks);
+    }
+});
 
 // 4. Stretch goals:
 //    - Display a chekcbox next to each task to represent done/todo 
