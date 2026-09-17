@@ -19,8 +19,15 @@ class ResourceResults extends HTMLElement {
 
   // Step 3: Store the filtered dataset and current filters, then derive and render filtered results.
   // TODO: Keep a filtered copy of the dataset (e.g., #filteredResults).
+  #filteredResults = [];
   // TODO: Add a private filters field that triggers filtering and re-render.
-  
+  #filters = {
+    query: '',
+    category: 'all',
+    openNow: false,
+    virtual: false,
+  };
+
   constructor() {
     super();
     this._handleResultClick = this._handleResultClick.bind(this);
@@ -28,6 +35,14 @@ class ResourceResults extends HTMLElement {
   }
 
   // TODO: Add a filters property (e.g., set filters(filters)) that triggers filtering and re-render.
+  set filters(filters) {
+    // Retail ALL existing filter values unless explicitly overridden
+    this.#filters = {
+      ...this.#filters, // using the spread operator ...
+      ...filters, // whatever properties are inside of filters are being placed here
+    };
+    this.#applyFilters();
+  }
 
   set results(data) {
     this.#results = data;
@@ -68,15 +83,50 @@ class ResourceResults extends HTMLElement {
   }
 
   // TODO: Filter without mutating the original dataset.
+  #applyFilters() {
+    // Object Destructuring syntax
+    const { query, category, openNow, virtual } = this.#filters;
+    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedCategory = (category || '').trim().toLowerCase();
+
+    // There are many ways to implement filtering; the following is just one approach.
+    this.#filteredResults = this.#results.filter(result => {
+      if (normalizedQuery) {
+        const haystack = [result.title, result.summary, result.category, result.location]
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(normalizedQuery)) {
+          return false;
+        }
+      }
+      if (normalizedCategory && normalizedCategory !== 'all') {
+        if (result.category.toLowerCase() !== normalizedCategory) {
+          return false;
+        }
+      }
+
+      if (openNow && !result.openNow) {
+        return false;
+      }
+
+      if (virtual && !result.virtual) {
+        return false;
+      }
+
+      return true;
+    });
+
+    this.render();
+  }
 
   render() {
     const content = template.content.cloneNode(true);
 
     // Step 3: Render from the derived (filtered) results, show an empty-state when none match.
     // TODO: Use the filtered results to build the list items.
-    if (this.#results.length) {
+    if (this.#filteredResults.length) {
       // Generate the list of results to display
-      const resultsHtml = this.#results.map(result => `<button type="button" class="list-group-item list-group-item-action" data-id="${result.id}">
+      const resultsHtml = this.#filteredResults.map(result => `<button type="button" class="list-group-item list-group-item-action" data-id="${result.id}">
           <div class="d-flex w-100 justify-content-between">
             <h2 class="h6 mb-1">${result.title}</h2>
             <small>${result.category}</small>

@@ -53,6 +53,10 @@ class ResourceFilters extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
     // TODO: Bind event handler methods
+    // Out event handlers need to know the "context" they are working in;
+    // in other words, they need to know about this instance of our class
+    this._handleSubmit = this._handleSubmit.bind(this);
+    this._handleCategoryClick = this._handleCategoryClick.bind(this);
   }
 
   // TODO: Manage lifecycle and events (i.e., connectedCallback, disconnectedCallback).
@@ -63,14 +67,19 @@ class ResourceFilters extends HTMLElement {
     this._formEl = this.shadowRoot.querySelector('#frm-filter');
     this._formEl.addEventListener('submit', this._handleSubmit);
     // TODO: Add click listener to category buttons.
+    this._categoryGroupEl = this.shadowRoot.querySelector('[aria-label="Category filters"]');
+    this._categoryGroupEl.addEventListener('click', this._handleCategoryClick);
   }
 
   disconnectedCallback() {
     if (this._formEl) {
       this._formEl.removeEventListener('submit', this._handleSubmit);
     }
+    if (this._categoryGroupEl) {
+      this._categoryGroupEl.removeEventListener('click', this._handleCategoryClick);
+    }
   }
-  
+
   // Step 2: Create submit handler method.
   _handleSubmit(event) {
     event.preventDefault();
@@ -85,13 +94,28 @@ class ResourceFilters extends HTMLElement {
 
     // TODO: Dispatch a bubbling + composed CustomEvent('resource-filters-changed', { detail: filters }).
     const filtersEvent = new CustomEvent('resource-filters-changed', {
-      detail: filters, bubbles: true, composed: true
+      detail: filters, bubbles: true, composed: true,
     });
     this.dispatchEvent(filtersEvent);
   }
 
   // Step 2: Create category button click handler method.
   // TODO: Handle category button clicks to set active state.
+  /**
+   * Handle a click event on a button
+   * @param {Event} event - The click event
+   */
+  _handleCategoryClick(event) {
+    const button = event.target.closest('button');
+    if (button && this._categoryGroupEl.contains(button)) {
+      const activeButton = this._categoryGroupEl.querySelector('.active');
+      if (activeButton && activeButton !== button) {
+        // if some other button has a .active CSS class name
+        activeButton.classList.remove('active');
+      }
+      button.classList.add('active');
+    }
+  }
 
   render() {
     this.shadowRoot.appendChild(template.content.cloneNode(true));
