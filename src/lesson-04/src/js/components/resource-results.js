@@ -90,7 +90,7 @@ class ResourceResults extends HTMLElement {
     const normalizedCategory = (category || '').trim().toLowerCase();
 
     // There are many ways to implement filtering; the following is just one approach.
-    this.#filteredResults = this.#results.filter(result => {
+    this.#filteredResults = this.#results.filter((result) => {
       if (normalizedQuery) {
         const haystack = [result.title, result.summary, result.category, result.location]
           .join(' ')
