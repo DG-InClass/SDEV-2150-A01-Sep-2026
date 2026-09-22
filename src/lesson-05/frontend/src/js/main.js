@@ -4,19 +4,9 @@ import './components/resource-filters.js';
 import './components/resource-results.js';
 import './components/resource-details.js';
 
-// TODO: Stage 1: Replace hard-coded data with a fetch() call
-// Sample data for resources
-const resultData = []; // Empty out all the hardcoded data
-
-// TEMP: "Smoke test"
-const response = await fetch('http://localhost:3000/resources');
-const data = await response.json();
-console.log(data);
-resultData.push(...data);
-
-// TODO: Stage 1: After fetching from the API, pass the fetched resources into <resource-results>
+// Since we're using the `source=""` attribute in the HTML,
+// we'll avoid setting the resultsComponent.results property.
 const resultsComponent = document.querySelector('resource-results');
-resultsComponent.results = resultData;
 
 // Filters emit state, main.js updates results and resets details
 const filtersComponent = document.querySelector('resource-filters');
