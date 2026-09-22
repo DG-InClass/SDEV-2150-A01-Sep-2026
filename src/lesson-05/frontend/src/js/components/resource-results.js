@@ -1,3 +1,6 @@
+import { getResources } from '../api/nait-resources';
+
+// #region HTML Template
 const template = document.createElement('template');
 template.innerHTML = `
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
@@ -13,10 +16,12 @@ template.innerHTML = `
       </div>
     </div>
   </section>`;
+// #endregion
 
 // TODO: Stage 2: This component will optionally fetch its own data
 // when a `source` attribute is provided (attribute-driven async side effects)
 class ResourceResults extends HTMLElement {
+  // #region Properties
   // TODO: Stage 2: Track loading and error state when fetching from `source`
   // Example: #isLoading = false; #error = null;
   #results = [];
@@ -27,6 +32,7 @@ class ResourceResults extends HTMLElement {
     openNow: false,
     virtual: false,
   };
+  // #endregion
 
   constructor() {
     super();
@@ -35,6 +41,26 @@ class ResourceResults extends HTMLElement {
   }
 
   // TODO: Stage 2: Observe the `source` attribute
+  // My component is "watching" for changes in these attributes
+  static observedAttributes = ['source'];
+  //     \___ spelling ___/
+  // The browser will notify me of changes to any observedAttributes
+  async attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'source' && oldValue !== newValue) {
+      // Check if we're attached to the DOM
+      if (this.isConnected) {
+        // TODO: move fetch code to another place
+        console.log(`Fetch from ${newValue}`);
+        try {
+          const data = await getResources(newValue);
+          this.results = data; // Leverage the setter, which calls render()
+        } catch (error) {
+          // TODO: I should *really* show something useful to the user
+          console.log(error);
+        }
+      }
+    }
+  }
 
   set results(data) {
     this.#results = data;
