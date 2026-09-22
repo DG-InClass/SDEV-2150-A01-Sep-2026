@@ -15,7 +15,7 @@ export async function getResources(endpoint) {
 // A Promise-API based approach to getResources()
 /**
  * This getResources2 is my person preferred way to do API calls
- * 
+ *
  * @example
  * getResources2(sourceUrl)
  *   .then(data => this.results) // Setting my .results
