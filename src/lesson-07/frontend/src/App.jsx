@@ -4,13 +4,18 @@ import Filters from './components/Filters';
 import './App.css'
 
 function App() {
-
+  const rebranding = "New and Improved NAIT Resource Directory";
   return (
     <>
-      <Header />
+      <Header
+        heading={rebranding}
+        tagline="Find the right resources, right away" />
       <hr />
-      <Filters />
-      <Results />
+      <div className='grid grid-cols-3 gap-4'>
+        <Filters />
+        <Results />
+
+      </div>
     </>
   )
 }
