@@ -4,7 +4,7 @@ import Results from './components/Results';
 import Details from './components/Details';
 import './App.css';
 import PageLayout from './components/layout/PageLayout';
-
+``
 function App() {
   return (
     <PageLayout
