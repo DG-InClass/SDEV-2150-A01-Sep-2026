@@ -1,11 +1,37 @@
+import { useState } from 'react';
 import Card from './ui/Card';
 
 // src/components/Filters.jsx
 export default function Filters() {
+  // You should use your React hooks first in your component
+  // useState() is a function that makes React responsible for tracking
+  // data that is important to our component.
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [openNowOnly, setOpenNowOnly] = useState(false);
+  const [isVirtual, setIsVirtual] = useState(false);
+
+  function toggleCategory(category) {
+    setSelectedCategories((previous) => {
+      if (category === 'All') return [];
+      if (previous.includes(category)) {
+        return previous.filter((item) => item !== category); // "un-check"
+      }
+      return [...previous, category]; // add the category
+    });
+  }
+
+  function handleSubmit(evt) {
+    evt.preventDefault();
+    console.log('Filters submitted', {
+      searchTerm, selectedCategories, openNowOnly, isVirtual
+    });
+  }
+
   return (
     <Card title="Filters">
       <div className="space-y-4 p-4">
-        <form id="frm-filter" className="space-y-4">
+        <form id="frm-filter" className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1">
             <label htmlFor="q" className="block text-sm font-medium text-gray-700">
               Search
@@ -13,10 +39,13 @@ export default function Filters() {
             <input
               id="q"
               type="text"
+              value={searchTerm}
+              onChange={(evt) => setSearchTerm(evt.target.value)}
               placeholder="Try: tutoring, mental health, bursary"
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
             />
           </div>
+          <p>Searching for: {searchTerm || '(nothing yet)'}</p>
 
           <hr className="border-gray-200" />
 
@@ -27,7 +56,13 @@ export default function Filters() {
                 <button
                   key={label}
                   type="button"
-                  className="rounded border border-sky-600 px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50"
+                  className={`btn btn-sm ${
+                    (label === 'All'
+                      ? selectedCategories.length === 0
+                      : selectedCategories.includes(label))
+                      ? 'btn-primary' : 'btn-outline'
+                  }`}
+                  onClick={() => toggleCategory(label)}
                 >
                   {label}
                 </button>
@@ -42,6 +77,8 @@ export default function Filters() {
               <input
                 type="checkbox"
                 id="openNow"
+                checked={openNowOnly}
+                onChange={(evt) => setOpenNowOnly(evt.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
               />
               Open now
@@ -51,6 +88,8 @@ export default function Filters() {
               <input
                 type="checkbox"
                 id="virtual"
+                checked={isVirtual}
+                onChange={(evt) => setIsVirtual(evt.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
               />
               Virtual options
