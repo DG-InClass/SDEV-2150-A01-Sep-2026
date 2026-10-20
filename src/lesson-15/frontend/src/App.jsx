@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSelectedResource } from './hooks/useSelectedResource';
 
 import Header from './components/Header';
 import Filters from './components/Filters';
@@ -10,7 +11,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [openNowOnly, setOpenNowOnly] = useState(false);
-  const [selectedResource, setSelectedResource] = useState(null);
+  const [selectedResource, setSelectedResource] = useSelectedResource();
   const [virtualOnly, setVirtualOnly] = useState(false);
 
   return (
@@ -38,6 +39,12 @@ function App() {
         />
       </section>
       <aside className="md:col-span-1 lg:col-span-1">
+        <button type="button" className="btn btn-sm btn-outline mb-3"
+          disabled={selectedResource === null}
+          onClick={() => setSelectedResource(null)}>
+          Clear Selection
+        </button>
+
         {selectedResource ? (
           <Details resource={selectedResource} />
         ) : (
