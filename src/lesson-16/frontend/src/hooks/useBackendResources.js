@@ -2,45 +2,62 @@
 import { useEffect, useState } from "react";
 
 const API_BASE_URL = 'http://localhost:3000';
+const API_GET_RESOURCES = `${API_BASE_URL}/resources`;
 
 export function useBackendResources() {
     const [resources, setResources] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [requestVersion, setRequestVersion] = useState(0);
+    // const [requestVersion, setRequestVersion] = useState(0);
 
     useEffect(() => {
-        // The AbortController allows us to "give up" on a fetch call
+        // The controller lets our cleanup function cancel the request (e.g. on unmount)
         const controller = new AbortController();
-        const { signal } = controller;
-
-        async function fetchResources() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/resources`, { signal });
-                if (!response.ok) {
-                    throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+        // Cancel if WE abrot it, OR if the server takes too long
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(5000)]);
+        console.log('Begin fetch');
+        fetch(API_GET_RESOURCES, { signal })
+            .catch((err) => {
+                // fetch() only rejects when no response arrived at all
+                if (err.name === 'TimeoutError') {
+                    throw new Error('The server took too long to respond', { cause: err});
                 }
-                const data = await response.json();
-                if (!Array.isArray(data)) {
-                    throw new Error('Expected an array of resources.');
+                throw new Error('Could not reach the server. Is the backend running?', { cause: err });
+            })
+            .then((response) => {
+                if(!response.ok) {
+                    throw new Error(`Request faild: ${response.status} ${response.statusText}`);
                 }
-                if (!signal.aborted) setResources(data);
-            } catch (err) {
-                if (!signal.aborted) setError(err);
-            } finally {
-                if (!signal.aborted) setIsLoading(false);
-            }
-        }
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error(`Server did not respond with JSON ${contentType}`);
+                }
+                return response.json();
+            })
+            .then((data) => {
+                if(!Array.isArray(data)) {
+                    throw new Error('Expected an array of NAIT resources');
+                }
+                console.log('Use the data from the fetch');
+                setResources(data);
+                setIsLoading(false); // we got the data!
+            })
+            .catch((err)=> {
+                setError(err.message);
+                setIsLoading(false);
+                console.error(err); // echo the error to the browser console
+            });
+        console.log('Exit effect');
+        return () => {
+            console.log('Cleanup after the effect');
+        };
+    }, []); // The empty array means that this callback is executed only once
 
-        fetchResources();
-        return () => controller.abort();
-    }, [requestVersion]);
+    // function refetch() {
+    //     setIsLoading(true);
+    //     setError(null);
+    //     setRequestVersion((version) => version + 1);
+    // }
 
-    function refetch() {
-        setIsLoading(true);
-        setError(null);
-        setRequestVersion((version) => version + 1);
-    }
-
-    return { resources, isLoading, error, refetch };
+    return { resources, isLoading, error };
 }
