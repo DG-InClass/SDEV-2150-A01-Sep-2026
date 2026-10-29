@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useResources } from '../hooks/useResources';
 import Card from '../components/ui/Card';
+import { useNavigate, useParams } from 'react-router';
 
 export default function AdminPage() {
+  // #region React state, hooks, etc.
+  const { resourceId } = useParams(); // Note that resourceId must match the dynamic route :resourceId
+  const navigate = useNavigate(); // get the function to help us navigate
+
   const [formData, setFormData] = useState({
     title: 'Study Group',
     category: 'Wellness',
@@ -16,6 +21,39 @@ export default function AdminPage() {
   });
 
   const { resources, addResource, isLoading, error, refetch } = useResources();
+
+  useEffect(() => {
+    if(!resourceId) {
+      setFormData({
+        title: '',
+        category: '',
+        summary: '',
+        location: '',
+        hours: '',
+        contact: '',
+        virtual: false,
+        openNow: false,
+      });
+      return;
+    }
+
+    const resource = resources.find((item) => item.id === resourceId);
+
+    if(!resource) return; // didn't find that resource
+
+    setFormData({
+      title: resource.title,
+      category: resource.category,
+      summary: resource.summary,
+      location: resource.location,
+      hours: resource.hours,
+      contact: resource.contact,
+      virtual: resource.virtual,
+      openNow: resource.openNow,
+    });
+
+  }, [resourceId, resources]);
+  // #endregion
 
   async function handleCreateResource(e) {
     e.preventDefault();
@@ -36,6 +74,10 @@ export default function AdminPage() {
     // }
 
     // refetch();
+  }
+
+  function handleEditStart(resource) {
+    navigate(`/admin/${resource.id}`);
   }
 
   return (
@@ -110,7 +152,9 @@ export default function AdminPage() {
           <div className="card-body">
             <ul className="space-y-2">
               {resources.map((resource) => (
-                <li key={resource.id} className="rounded border border-gray-200 p-3 ">
+                <li key={resource.id} 
+                  className="rounded border border-gray-200 p-3 " 
+                  onClick={() => handleEditStart(resource)}>
                   <p className="font-semibold">{resource.title}</p>
                   <p className="text-sm text-base-content/70">{resource.category}</p>
                 </li>
