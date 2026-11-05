@@ -2,7 +2,7 @@
 import App from './App';
 import ResourceDirectoryPage from './pages/ResourceDirectoryPage';
 import AdminPage from './pages/AdminPage';
-import { redirect, createBrowserRouter } from 'react-router';
+import { data, redirect, createBrowserRouter } from 'react-router';
 
 // Remember to have this constant in place before calling createBrowserRouter()
 const API_BASE_URL = 'http://localhost:3000';
@@ -49,6 +49,21 @@ export async function adminAction({ request, params }) {
         openNow: formData.get('openNow') === 'on',
     };
 
+    // validation here
+    const errors = {};
+    if (!payload.contact.includes('@')) {
+        errors.contact = 'Contact information must be an email';
+    }
+    // other validation....
+    // ... end validation
+    // Did we add any properties to errors?
+    if (Object.keys(errors).length > 0) {
+        return data(
+            { errors, values: payload },
+            { status: 400 }
+        );
+    }
+
     const isEditing = Boolean(params.resourceId);
     const url = isEditing
               ? `${API_BASE_URL}/resources/${params.resourceId}`
@@ -64,7 +79,7 @@ export async function adminAction({ request, params }) {
     });
 
     if (!res.ok) {
-        throw new Error(`Could not ${isEditing ? 'update' : 'create'} resource`);
+        throw new Error(`Could not ${isEditing ? 'update' : 'create'} resource: ${res.status} (${res.statusText})`);
     }
 
     const savedResource = await res.json();

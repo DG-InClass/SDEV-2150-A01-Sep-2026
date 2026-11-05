@@ -1,6 +1,8 @@
-import { useNavigate, useParams } from 'react-router';
+// import { useNavigate, useParams } from 'react-router';
 
-import { useResources } from '../hooks/useResources';
+// import { useResources } from '../hooks/useResources';
+import { NavLink, useLoaderData, useNavigation } from 'react-router';
+
 import Card from '../components/ui/Card';
 import ResourceForm from '../components/ResourceForm';
 
@@ -18,25 +20,15 @@ const EMPTY_FORM_DATA = {
 };
 
 export default function AdminPage() {
-  const { resourceId } = useParams();
-  const navigate = useNavigate();
+  // const { resourceId } = useParams();
+  // const navigate = useNavigate();
 
-  const { resources, isLoading, error, refetch } = useResources();
+  // const { resources, isLoading, error, refetch } = useResources();
+  const { resources, selectedResource:currentResource, resourceId } = useLoaderData();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === "submitting";
+  const isLoading = navigation.state === "loading";
 
-  // We no longer require a useEffect to track the current resource. Instead, we 
-  // can derive it directly from the URL param and the list of resources. If the 
-  // resourceId param is present, we find the corresponding resource from the list.
-  // If it's not present, currentResource will be null, which indicates that we're
-  // creating a new resource rather than editing an existing one.
-
-  // Track the current resource based on the URL param. If no resourceId is present, 
-  // currentResource will be null..
-  const currentResource = resourceId
-    ? resources.find((item) => item.id === resourceId)
-    : null;
-
-  // Set the initial form data based on the current resource. If it's not null, use 
-  // the resource's data. Otherwise, use the empty form data.
   const initialFormData = currentResource ? {
     title: currentResource.title,
     category: currentResource.category,
@@ -48,42 +40,6 @@ export default function AdminPage() {
     openNow: currentResource.openNow,
   } : EMPTY_FORM_DATA;
 
-  function handleEditStart(resource) {
-    navigate(`/admin/${resource.id}`);
-  }
-
-  async function handleCreateResource(e, formData) {
-    e.preventDefault();
-    e.preventDefault();
-
-    const isEditing = Boolean(resourceId);
-    const url = isEditing
-      ? `http://localhost:3000/resources/${resourceId}`
-      : 'http://localhost:3000/resources';
-
-    const method = isEditing ? 'PUT' : 'POST';
-
-    const res = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Could not ${isEditing ? 'update' : 'create'} resource`);
-    }
-
-    const savedResource = await res.json();
-    await refetch();
-
-    navigate(`/admin/${savedResource.id}`);
-  }
-
-  // Determine if we're in editing mode based on the presence of the resourceId param.
-  const isEditing = Boolean(resourceId);
-
   return (
     <>
       <div>
@@ -93,14 +49,8 @@ export default function AdminPage() {
         </p>
       </div>
 
-      {isLoading && <p>Loading resources...</p>}
+      {Boolean(resourceId) && <p>Loading resources...</p>}
 
-      {error && (
-        <div className="alert alert-error">
-          <span>{error.message}</span>
-          <button className="btn btn-sm" onClick={refetch}>Try again</button>
-        </div>
-      )}
 
       <section className="md:col-span-3 lg:col-span-3">
         <Card title="Resource Form">
@@ -118,9 +68,8 @@ export default function AdminPage() {
               <ResourceForm
                 key={resourceId ?? 'new'}
                 initialData={initialFormData}
-                isEditing={isEditing}
-                onSubmit={handleCreateResource}
-                onReset={() => navigate('/admin')}
+                isEditing={Boolean(resourceId)}
+                isSubmitting={isSubmitting}
               />
             )}
           </div>
@@ -132,12 +81,15 @@ export default function AdminPage() {
           <div className="card-body">
             <ul className="space-y-2">
               {resources.map((resource) => (
-                <li
-                  key={resource.id}
-                  className="rounded border border-gray-200 p-3 cursor-pointer hover:border-sky-400"
-                  onClick={() => handleEditStart(resource)}>
-                  <p className="font-semibold">{resource.title}</p>
-                  <p className="text-sm text-base-content/70">{resource.category}</p>
+                <li key={resource.id}>
+                  <NavLink to={`/admin/${resource.id}`}
+                    className={( {isActive }) => 
+                      `block rounded border p-3 ${isActive ? 'border-sky-500 bg-sky-50' : 'border-gray-200'}`
+                    }
+                  >
+                    <p className="font-semibold">{resource.title}</p>
+                    <p className="text-sm text-base-content/70">{resource.category}</p>
+                  </NavLink>
                 </li>
               ))}
             </ul>
